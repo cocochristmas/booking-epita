@@ -1,6 +1,10 @@
-name: Security Check on Pull Request
-
-on:
+name: Security Check on Pull Reque      # Comparaison des analyses
+      - name: Compare OSV Analysis
+        uses: google/osv-scanner-action/osv-scanner-action@v2.0.2
+        with:
+          scan-args: |
+            --json osv-before.json osv-current.json \
+            --diff > osv-diff-report.txt
   pull_request:
     branches: [main]
 
