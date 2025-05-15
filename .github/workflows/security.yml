@@ -25,7 +25,8 @@ jobs:
         with:
           scan-args: |
             --format=sarif \
-            --output=osv-results.sarif
+            --output=osv-results.sarif \
+            ./app
 
       # Upload du rapport SARIF
       - name: Upload OSV SARIF Report
