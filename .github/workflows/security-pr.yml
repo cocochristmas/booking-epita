@@ -1,0 +1,80 @@
+name: Security Check on Pull Request
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  dependencies-analysis:
+    name: Dependencies Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Analyse avant PR (baseline)
+      - name: Run OSV Scanner (Before)
+        uses: google/osv-scanner-action/osv-scanner-action@v1.6
+        with:
+          scan-args: --format=json > osv-before.json
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      # Analyse courante
+      - name: Run OSV Scanner (Current)
+        uses: google/osv-scanner-action/osv-scanner-action@v1.6
+        with:
+          scan-args: --format=json > osv-current.json
+
+      # Comparaison des analyses
+      - name: Compare OSV Analysis
+        uses: google/osv-scanner-action/osv-reporter-action@v1.6
+        with:
+          before: osv-before.json
+          after: osv-current.json
+          output: osv-diff-report.txt
+
+      # Sauvegarde du rapport comme artifact
+      - name: Upload OSV Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: osv-security-report
+          path: |
+            osv-current.json
+            osv-diff-report.txt
+
+  source-code-analysis:
+    name: Source Code Analysis
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
+    permissions:
+      security-events: write
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Analyse Semgrep
+      - name: Run Semgrep Analysis
+        run: |
+          semgrep scan --json --config "p/java" \
+            --baseline-commit ${{ github.event.pull_request.base.sha }} \
+            > semgrep-results.json
+
+      # Sauvegarde du rapport comme artifact
+      - name: Upload Semgrep Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-analysis-report
+          path: semgrep-results.json

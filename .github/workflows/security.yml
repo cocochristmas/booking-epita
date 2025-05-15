@@ -1,0 +1,53 @@
+name: Daily Security Pipeline
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Exécution quotidienne à minuit
+  workflow_dispatch: # Permet l'exécution manuelle
+
+jobs:
+  dependencies-analysis:
+    name: Dependencies Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run OSV Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@v1.6
+        with:
+          scan-args: --format=sarif > osv-results.sarif
+
+      - name: Upload SARIF report
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: osv-results.sarif
+          category: osv-scanner
+
+  source-code-analysis:
+    name: Source Code Analysis
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Analyse Semgrep
+      - name: Run Semgrep Analysis
+        run: semgrep scan --json --config "p/java" > semgrep-results.json
+
+      # Sauvegarde du rapport comme artifact
+      - name: Upload Semgrep Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-analysis-report
+          path: semgrep-results.json
