@@ -1,12 +1,8 @@
-name: Security Check on Pull Reque      # Comparaison des analyses
-      - name: Compare OSV Analysis
-        uses: google/osv-scanner-action/osv-scanner-action@v2.0.2
-        with:
-          scan-args: |
-            --json osv-before.json osv-current.json \
-            --diff > osv-diff-report.txt
+name: Security Check on Pull Request
+
+on:
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   dependencies-analysis:
@@ -38,11 +34,11 @@ jobs:
 
       # Comparaison des analyses
       - name: Compare OSV Analysis
-        uses: google/osv-scanner-action/osv-reporter-action@v2.0.2
+        uses: google/osv-scanner-action/osv-scanner-action@v2.0.2
         with:
-          before: osv-before.json
-          after: osv-current.json
-          output: osv-diff-report.txt
+          scan-args: |
+            --json osv-before.json osv-current.json \
+            --diff > osv-diff-report.txt
 
       # Sauvegarde du rapport comme artifact
       - name: Upload OSV Report
