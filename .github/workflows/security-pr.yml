@@ -21,20 +21,20 @@ jobs:
 
       # Analyse avant PR (baseline)
       - name: Run OSV Scanner (Before)
-        uses: google/osv-scanner-action/osv-scanner-action@v1.6
+        uses: google/osv-scanner-action/osv-scanner-action@v2.0.2
         with:
           scan-args: --format=json > osv-before.json
           ref: ${{ github.event.pull_request.base.sha }}
 
       # Analyse courante
       - name: Run OSV Scanner (Current)
-        uses: google/osv-scanner-action/osv-scanner-action@v1.6
+        uses: google/osv-scanner-action/osv-scanner-action@v2.0.2
         with:
           scan-args: --format=json > osv-current.json
 
       # Comparaison des analyses
       - name: Compare OSV Analysis
-        uses: google/osv-scanner-action/osv-reporter-action@v1.6
+        uses: google/osv-scanner-action/osv-reporter-action@v2.0.2
         with:
           before: osv-before.json
           after: osv-current.json
