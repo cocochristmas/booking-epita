@@ -36,23 +36,18 @@ jobs:
         with:
           scan-args: --format=json > osv-current.json
 
-      # Comparaison des analyses
-      - name: Compare OSV Analysis
-        if: github.event_name == 'pull_request'
+      # Analyse OSV avec sortie SARIF
+      - name: Run OSV Analysis
         uses: google/osv-scanner-action/osv-scanner-action@v2.0.2
         with:
-          scan-args: |
-            --json osv-before.json osv-current.json \
-            --diff > osv-diff-report.txt
+          scan-args: --format=sarif > osv-results.sarif
 
-      # Sauvegarde du rapport comme artifact
-      - name: Upload OSV Report
-        uses: actions/upload-artifact@v4
+      # Upload du rapport SARIF
+      - name: Upload OSV SARIF Report
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          name: osv-security-report
-          path: |
-            osv-current.json
-            osv-diff-report.txt
+          sarif_file: osv-results.sarif
+          category: osv-scanner
 
   source-code-analysis:
     name: Source Code Analysis
@@ -74,16 +69,16 @@ jobs:
       - name: Run Semgrep Analysis
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            semgrep scan --json --config "p/java" \
+            semgrep scan --sarif --config "p/java" \
               --baseline-commit ${{ github.event.pull_request.base.sha }} \
-              > semgrep-results.json
+              > semgrep-results.sarif
           else
-            semgrep scan --json --config "p/java" > semgrep-results.json
+            semgrep scan --sarif --config "p/java" > semgrep-results.sarif
           fi
 
-      # Sauvegarde du rapport comme artifact
-      - name: Upload Semgrep Report
-        uses: actions/upload-artifact@v4
+      # Upload du rapport SARIF
+      - name: Upload Semgrep SARIF Report
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          name: semgrep-analysis-report
-          path: semgrep-results.json
+          sarif_file: semgrep-results.sarif
+          category: semgrep
